@@ -359,4 +359,6 @@ function enter(){clearTimeout(splash.t);const e=$("#sp");if(e.className!="on")re
  if(S.pin&&S.name&&SEC){pm="unlock";sp("Bem-vinda de volta","Digite seu PIN.")}else{S.pin=SEC?S.pin:null;render()}}
 splash();
 try{if("serviceWorker"in navigator&&location.protocol.indexOf("http")==0)navigator.serviceWorker.register("sw.js").catch(()=>{})}catch(e){}
+window.addEventListener('error', e => console.error('Global error:', e.error));
+window.addEventListener('unhandledrejection', e => console.error('Unhandled rejection:', e.reason));
 </script></body></html>
