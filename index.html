@@ -17,16 +17,16 @@
   loadCSS('src/css/variables.css');
   if (isMobile()) {
     loadCSS('src/css/mobile.css');
-    document.getElementById('app').classList.add('mobile');
+    document.documentElement.classList.add('mobile');
   } else {
     loadCSS('src/css/desktop.css');
-    document.getElementById('app').classList.add('desktop');
+    document.documentElement.classList.add('desktop');
   }
   let resizeTimer;
   window.addEventListener('resize', function() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function() {
-      const wasMobile = document.getElementById('app').classList.contains('mobile');
+      const wasMobile = document.documentElement.classList.contains('mobile');
       const nowMobile = isMobile();
       if (wasMobile !== nowMobile) location.reload();
     }, 150);
