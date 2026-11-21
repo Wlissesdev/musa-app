@@ -1,0 +1,142 @@
+
+const IMG="icons/nise.jpg",$=s=>document.querySelector(s),K="musa.v2";
+const MOODS=["ðŸ˜ž","ðŸ˜•","ðŸ˜","ðŸ™‚","ðŸ˜Š"],ML=["Muito mal","Mal","Neutra","Bem","Muito bem"];
+const TAGS=["Ansiosa","Cansada","Irritada","Triste","Calma","Grata","Sobrecarregada","Sozinha","Motivada","InsÃ´nia","Com medo","EsperanÃ§osa"];
+const PROMPTS=["O que meu corpo estÃ¡ tentando me dizer hoje?","Qual silÃªncio eu carreguei esta semana e posso nomear?","Quem eu era aos 10 anos e o que ela diria para mim agora?","Uma coisa que fiz por mim hoje, mesmo pequena.","O que eu gostaria de ouvir de alguÃ©m neste momento?","Qual desejo meu eu deixei de lado e por quÃª?","Escreva uma carta curta para a mulher que vocÃª serÃ¡ em um ano."];
+const AP=["Desenhe como o seu dia estÃ¡ por dentro, sem se preocupar com o resultado.","Escolha uma cor para o que vocÃª sente agora e deixe a mÃ£o se mover.","FaÃ§a linhas, formas ou manchas. NÃ£o precisa ser â€œbonitoâ€.","Desenhe um lugar onde vocÃª se sente segura."];
+const QS=[["NÃ£o se curem alÃ©m da conta. Gente curada demais Ã© gente chata.","Frase atribuÃ­da a Nise da Silveira"],["Sentir nÃ£o Ã© fraqueza. Ã‰ informaÃ§Ã£o sobre o que importa para vocÃª.","MUSA"],["Descansar tambÃ©m Ã© cuidar. VocÃª nÃ£o precisa merecer uma pausa.","MUSA"],["Pedir ajuda Ã© uma forma de coragem, nÃ£o de fracasso.","MUSA"],["Hoje basta um passo pequeno. Ele ainda conta.","MUSA"]];
+const RIT=[["agua","ðŸ’§","Ãgua"],["sono","ðŸŒ™","Dormir bem"],["corpo","ðŸš¶â€â™€ï¸","Mover o corpo"],["sol","â˜€ï¸","Sol ou ar livre"],["gente","ðŸ’¬","Falar com alguÃ©m"],["arte","ðŸŽ¨","Momento de arte"]];
+const BOOKS=[["A Redoma de Vidro","Sylvia Plath","Quando tudo parece certo por fora e pesado por dentro: o que vocÃª ainda nÃ£o disse em voz alta?"],["Garota, Interrompida","Susanna Kaysen","Quem decide o que Ã© â€œnormalâ€? Como vocÃª se trata quando foge do esperado?"],["As Virgens Suicidas","Jeffrey Eugenides","Quem ouve quem estÃ¡ em silÃªncio ao seu redor?"],["A Bolsa Amarela","Lygia Bojunga","Que desejos vocÃª guarda na sua â€œbolsaâ€?"],["Olhos dâ€™Ã¡gua","ConceiÃ§Ã£o Evaristo","Que memÃ³rias de mulheres da sua famÃ­lia ainda moram em vocÃª?"],["Ciranda de Pedra","Lygia Fagundes Telles","Que afeto faltou e como vocÃª pode oferecÃª-lo a si mesma?"]];
+const BR=[["Relaxar Â· 4-2-6",[["Inspire",4,1.3],["Segure",2,1.3],["Solte",6,1]]],["Quadrada Â· 4-4-4-4",[["Inspire",4,1.3],["Segure",4,1.3],["Solte",4,1],["Segure",4,1]]],["Sono Â· 4-7-8",[["Inspire",4,1.3],["Segure",7,1.3],["Solte",8,1]]]];
+const BD=[["ðŸŒ±","Primeiro passo","1Âº registro",()=>Object.keys(S.log).length>=1],["ðŸ”¥","3 dias","3 dias seguidos",()=>streak()>=3],["ðŸŒŸ","7 dias","7 dias seguidos",()=>streak()>=7],["ðŸ“–","Escritora","1Âº texto",()=>S.journal.length>=1],["ðŸŽ¨","Artista","1Âº desenho",()=>S.art.length>=1],["ðŸŒ¿","Dia de cuidado","6 rituais",()=>Object.values(S.rit).some(a=>a.length>=RIT.length)],["ðŸ›¡ï¸","Protegida","PIN ou plano",()=>!!S.pin||!!S.plan.people]];
+let S;try{S=JSON.parse(localStorage.getItem(K))}catch(e){}S=S||{name:"",log:{},journal:[],rit:{},art:[],plan:{},pin:null};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast("Sem espaÃ§o para salvar")}};
+const dk=d=>{d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const today=dk(),dayN=Math.floor(Date.now()/864e5),esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const SEC=!!(window.crypto&&crypto.subtle);
+let tab="hoje",draft={mood:null,energy:3,sleep:3,tags:[],note:""},bt=null,bi=0,pm=null,fst="",buf="",pt=["",""],fails=0,until=0,hid=0,ac="#d9604a",az=10,ae=false;
+function toast(t){const e=$("#toast");e.textContent=t;e.className="on";clearTimeout(toast.t);toast.t=setTimeout(()=>e.className="",2400)}
+const nb=()=>BD.filter(b=>b[3]()).length;
+function ach(f){const b=nb();f();save();render(0);if(nb()>b)toast("ðŸ… Nova conquista desbloqueada")}
+function streak(){let n=0;for(let i=0;i<400;i++){const d=new Date();d.setDate(d.getDate()-i);if(S.log[dk(d)])n++;else if(i>0)break}return n}
+const TABS=[["hoje","ðŸŒ¸","Hoje"],["diario","ðŸ“–","DiÃ¡rio"],["ateli","ðŸŽ¨","AteliÃª"],["calma","ðŸŒ¿","Calma"],["eu","âœ¨","Eu"]];
+function go(t){tab=t;stopB();render()}
+function render(a=1){
+ if(pm=="unlock")return;const v=$("#v"),st=v.scrollTop;
+ if(!S.name){$("#nav").innerHTML="";$("#sidenav").innerHTML="";v.innerHTML=cover();return}
+ const navHtml=TABS.map(t=>`<button class="${t[0]==tab?"on":""}" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join("");
+ $("#nav").innerHTML=navHtml;
+ $("#sidenav").innerHTML=navHtml;
+ v.innerHTML=({hoje,diario,ateli,calma,eu})[tab]();
+ if(a){v.className="";void v.offsetWidth;v.className="in";v.scrollTop=0}else v.scrollTop=st;
+ if(tab=="ateli")artInit()}
+function cover(){return `<div class="cover"><div class="in2"><img src="${IMG}" alt="Nise da Silveira"><h1 style="font-size:40px;margin-top:18px">MUSA</h1><p class="q" style="font-size:20px">Um diÃ¡rio para escutar vocÃª.</p><p class="mute">Inspirado em Nise da Silveira, que acreditava em cuidar com arte, afeto e escuta.</p><input id="nm" placeholder="Como posso te chamar?" maxlength="30" autocomplete="off"><button class="btn" onclick="start()">ComeÃ§ar</button><p class="mute" style="font-size:12px;margin-top:18px">Seus registros ficam sÃ³ neste aparelho. O MUSA nÃ£o substitui acompanhamento psicolÃ³gico ou mÃ©dico.</p></div></div>`}
+function start(){const n=$("#nm").value.trim();if(!n){$("#nm").focus();return}S.name=n;save();render()}
+function hoje(){
+ const l=S.log[today],h=new Date().getHours(),g=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite",q=QS[dayN%QS.length],sk=streak(),rd=S.rit[today]||[];
+ return `<div class="hero"><div class="hrow"><div><div class="sm">${new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"})}</div><h1>${g}, ${esc(S.name)}</h1></div><img class="av" src="${IMG}" alt=""></div><p class="q">â€œ${q[0]}â€</p><div class="sm" style="text-transform:none">${q[1]}</div>${sk?`<span class="fl">ðŸ”¥ ${sk} ${sk>1?"dias seguidos":"dia"}</span>`:""}</div>`+
+ (l?`<div class="card"><h3>Registro de hoje ${MOODS[l.mood]}</h3><p class="mute">${ML[l.mood]}${l.tags.length?" Â· "+l.tags.join(", "):""}</p><button class="btn alt" onclick="delete S.log[today];save();render(0)">Refazer registro</button></div>`:
+ `<div class="card"><h3>Como vocÃª estÃ¡ agora?</h3><div class="moods">${MOODS.map((m,i)=>`<button class="${draft.mood===i?"on":""}" aria-label="${ML[i]}" onclick="draft.mood=${i};render(0)">${m}</button>`).join("")}</div>
+ <label>Energia: ${draft.energy}/5</label><input type="range" min="1" max="5" value="${draft.energy}" oninput="draft.energy=+this.value;this.previousElementSibling.textContent='Energia: '+this.value+'/5'">
+ <label>Qualidade do sono: ${draft.sleep}/5</label><input type="range" min="1" max="5" value="${draft.sleep}" oninput="draft.sleep=+this.value;this.previousElementSibling.textContent='Qualidade do sono: '+this.value+'/5'">
+ <label>O que vocÃª sente?</label><div class="row">${TAGS.map(t=>`<button class="chip ${draft.tags.includes(t)?"on":""}" onclick="tg('${t}')">${t}</button>`).join("")}</div>
+ <label>Nota rÃ¡pida (opcional)</label><textarea style="min-height:70px" oninput="draft.note=this.value">${esc(draft.note)}</textarea><div class="gap"></div><button class="btn" onclick="saveLog()">Salvar registro</button></div>`)+
+ `<div class="card"><div class="rh"><svg class="ring" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" class="rb"/><circle cx="30" cy="30" r="26" class="rf" style="stroke-dashoffset:${163.4*(1-rd.length/RIT.length)}"/></svg><div><h3>Rituais de hoje</h3><p class="mute" style="margin:0">${rd.length} de ${RIT.length} cuidados feitos</p></div></div><div class="row">${RIT.map(r=>`<button class="chip ${rd.includes(r[0])?"on":""}" onclick="rt('${r[0]}')">${r[1]} ${r[2]}</button>`).join("")}</div></div>`+insights()}
+function tg(t){const a=draft.tags,i=a.indexOf(t);i<0?a.push(t):a.splice(i,1);render(0)}
+function saveLog(){if(draft.mood===null){toast("Escolha como vocÃª estÃ¡");return}ach(()=>{S.log[today]={...draft};draft={mood:null,energy:3,sleep:3,tags:[],note:""}});toast("Registro salvo ðŸ’›")}
+function rt(id){ach(()=>{const a=S.rit[today]||(S.rit[today]=[]),i=a.indexOf(id);i<0?a.push(id):a.splice(i,1)})}
+function insights(){
+ const ds=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return[dk(d),["D","S","T","Q","Q","S","S"][d.getDay()]]});
+ const all=Object.values(S.log),vals=ds.map(d=>S.log[d[0]]).filter(Boolean),avg=vals.length?(vals.reduce((a,b)=>a+b.mood+1,0)/vals.length).toFixed(1):"â€“";
+ const cnt={};all.forEach(l=>l.tags.forEach(t=>cnt[t]=(cnt[t]||0)+1));const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0]).join(", ");
+ const m=a=>a.length?a.reduce((s,l)=>s+l.mood+1,0)/a.length:0,gs=all.filter(l=>l.sleep>=4),bs=all.filter(l=>l.sleep<=2);
+ const ins=gs.length>=2&&bs.length>=2?`<p style="margin:12px 0 0;font-size:14px">ðŸ’¡ Nos dias de sono bom, seu humor mÃ©dio foi ${m(gs).toFixed(1)}. Nos de sono ruim, ${m(bs).toFixed(1)}.</p>`:"";
+ return `<div class="card"><h3>Sua semana</h3><p class="mute">Humor mÃ©dio: ${avg}/5${top?" Â· Mais frequentes: "+top:""}</p><div class="bars">${ds.map(d=>{const l=S.log[d[0]];return `<div><i style="height:${l?(l.mood+1)*16:3}px;opacity:${l?1:.25}"></i>${d[1]}</div>`}).join("")}</div>${ins}</div>`}
+function diario(){
+ const i=dayN%PROMPTS.length;
+ return `<h1 style="margin-bottom:12px">DiÃ¡rio</h1><div class="card"><p class="mute">SugestÃ£o de hoje</p><h3 style="margin-bottom:10px">${PROMPTS[i]}</h3><textarea id="jt" placeholder="Escreva sem se preocupar em estar certa."></textarea><div class="gap"></div><button class="btn" onclick="addJ(${i})">Salvar texto</button></div>`+
+ (S.journal.length?S.journal.map(j=>`<div class="card"><div class="mute">${esc(j.d)}</div><p class="mute" style="font-family:Georgia,serif;font-style:italic">${esc(j.p)}</p><p style="white-space:pre-wrap;margin:6px 0 10px">${esc(j.t)}</p><button class="chip" onclick="delJ(${j.id})">Apagar</button></div>`).join(""):`<p class="mute">Seus textos aparecem aqui. Escreva o primeiro.</p>`)}
+function addJ(i){const t=$("#jt").value.trim();if(!t){$("#jt").focus();return}ach(()=>S.journal.unshift({id:Date.now(),d:new Date().toLocaleDateString("pt-BR"),p:PROMPTS[i],t}));toast("Texto salvo")}
+function delJ(id){if(confirm("Apagar este texto?")){S.journal=S.journal.filter(j=>j.id!=id);save();render(0)}}
+const COLS=["#d9604a","#e8a893","#e0b84a","#4f8f73","#3a6ea5","#6a3a8a","#2b1425"];
+function ateli(){
+ return `<h1>AteliÃª</h1><p class="mute">Nise da Silveira via na pintura um caminho de expressÃ£o. Ã€s vezes a cor diz o que a palavra nÃ£o alcanÃ§a.</p><div class="card"><p class="mute">${AP[dayN%AP.length]}</p><canvas id="cv" width="600" height="600"></canvas><div class="row" style="align-items:center;margin-bottom:10px">${COLS.map((c,i)=>`<button class="sw ${i==0?"on":""}" style="background:${c}" aria-label="Cor ${i+1}" onclick="setC('${c}',this)"></button>`).join("")}</div><div class="row" style="margin-bottom:12px"><button class="chip" onclick="az=5">Fino</button><button class="chip" onclick="az=10">MÃ©dio</button><button class="chip" onclick="az=24">Grosso</button><button class="chip" id="er" onclick="ae=!ae;this.classList.toggle('on',ae)">Borracha</button><button class="chip" onclick="artClear()">Limpar</button></div><button class="btn" onclick="artSave()">Salvar na galeria</button></div>`+
+ (S.art.length?`<h3 style="margin:6px 0 10px">Sua galeria</h3><div class="gal">${S.art.map((a,i)=>`<div><img src="${a}" alt="Desenho ${i+1}"><button class="chip" style="background:var(--card)" onclick="delA(${i})">âœ•</button></div>`).join("")}</div>`:`<p class="mute">Seus desenhos ficam guardados aqui.</p>`)}
+function setC(c,b){ac=c;ae=false;$("#er").classList.remove("on");document.querySelectorAll(".sw").forEach(s=>s.classList.remove("on"));b.classList.add("on")}
+let cx;function artClear(){if(cx){cx.fillStyle="#fbf3e6";cx.fillRect(0,0,600,600)}}
+function artInit(){const c=$("#cv");if(!c)return;cx=c.getContext("2d");cx.lineCap=cx.lineJoin="round";artClear();let d=false,l;
+ const p=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*600/r.width,(e.clientY-r.top)*600/r.height]};
+ const ln=(a,b)=>{cx.strokeStyle=ae?"#fbf3e6":ac;cx.lineWidth=az;cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke()};
+ c.onpointerdown=e=>{d=true;l=p(e);c.setPointerCapture(e.pointerId);ln(l,[l[0]+.1,l[1]])};
+ c.onpointermove=e=>{if(!d)return;const n=p(e);ln(l,n);l=n};c.onpointerup=c.onpointercancel=()=>d=false}
+function artSave(){ach(()=>{S.art.unshift($("#cv").toDataURL("image/jpeg",.6));S.art=S.art.slice(0,12)});toast("Desenho guardado ðŸŽ¨")}
+function delA(i){if(confirm("Apagar este desenho?")){S.art.splice(i,1);save();render(0)}}
+function calma(){return `<h1>Respirar</h1><div class="row" style="margin:12px 0">${BR.map((b,i)=>`<button class="chip ${i==bi?"on":""}" onclick="stopB();bi=${i};render(0)">${b[0]}</button>`).join("")}</div><div class="circle" id="bc">Pronta?</div><button class="btn" id="bb" onclick="breath()">ComeÃ§ar</button><div class="card" style="margin-top:20px"><h3>Se estiver difÃ­cil agora</h3><p class="mute">Olhe ao redor e nomeie 3 coisas que vÃª, 2 que ouve e 1 que toca. Depois beba um pouco de Ã¡gua.</p></div>`}
+function stopB(){clearTimeout(bt);bt=null}
+function breath(){const c=$("#bc"),b=$("#bb");
+ if(bt){stopB();c.style.transform="";c.textContent="Pronta?";b.textContent="ComeÃ§ar";return}
+ b.textContent="Parar";const P=BR[bi][1];
+ const run=i=>{const[n,s,k]=P[i%P.length];c.style.transition=`transform ${s}s ease-in-out`;c.style.transform=`scale(${k})`;c.textContent=n;bt=setTimeout(()=>run(i+1),s*1000)};run(0)}
+function eu(){const p=S.plan;
+ return `<div class="card"><h3>Precisa de ajuda agora?</h3><p class="mute">No Brasil, os atendimentos abaixo sÃ£o gratuitos.</p><a class="tel" href="tel:188">CVV Â· 188 Â· apoio emocional 24h</a><a class="tel" href="tel:192">SAMU Â· 192 Â· emergÃªncia mÃ©dica</a><a class="tel" href="tel:180">Ligue 180 Â· violÃªncia contra a mulher</a></div>
+ <div class="card"><h3>Conquistas Â· ${nb()}/${BD.length}</h3><div class="bd" style="margin-top:10px">${BD.map(b=>`<div class="${b[3]()?"":"lk"}"><b>${b[0]}</b>${b[1]}</div>`).join("")}</div></div>
+ <div class="card"><h3>Meu plano de apoio</h3><p class="mute">Escreva agora, com calma, para consultar nos dias difÃ­ceis.</p>
+ <label>Sinais de que nÃ£o estou bem</label><textarea onchange="S.plan.signs=this.value;save()">${esc(p.signs)}</textarea>
+ <label>O que me ajuda a me acalmar</label><textarea onchange="S.plan.coping=this.value;save()">${esc(p.coping)}</textarea>
+ <label>Pessoa de confianÃ§a</label><input value="${esc(p.people)}" placeholder="Nome" onchange="S.plan.people=this.value;save();render(0)"><label>Telefone dela</label><input type="tel" value="${esc(p.phone)}" onchange="S.plan.phone=this.value.replace(/[^0-9+]/g,'');save();render(0)">
+ ${p.phone?`<div class="gap"></div><a class="tel" href="tel:${esc(p.phone)}">Ligar para ${esc(p.people||"minha pessoa de confianÃ§a")}</a>`:""}</div>
+ <div class="card"><h3>Leituras que abrem conversa</h3><p class="mute">Inspiradas nas obras da pesquisa MUSA. Leve a pergunta para o diÃ¡rio.</p>${BOOKS.map(b=>`<div class="bk"><b>${b[0]}</b><div class="mute" style="font-size:12px;margin:0">${b[1]}</div><p style="margin:4px 0 0;font-size:14px">${b[2]}</p></div>`).join("")}</div>
+ <div class="card"><h3>SeguranÃ§a e privacidade</h3><p class="mute">Seus dados ficam sÃ³ neste aparelho e nunca sÃ£o enviados. ${S.pin?"O PIN protege a abertura do app.":"Crie um PIN para proteger a abertura do app."}</p>${SEC?(S.pin?`<button class="btn alt" onclick="pm='off';buf='';sp('Remover PIN','Digite o PIN atual.')">Remover PIN</button>`:`<button class="btn" onclick="pm='new';buf='';sp('Criar PIN','Escolha 4 nÃºmeros.')">Criar PIN de 4 dÃ­gitos</button>`):`<p class="mute">PIN indisponÃ­vel neste navegador.</p>`}</div>
+ <div class="card"><h3>Sobre o MUSA</h3><p style="font-size:14px;margin:0">O MUSA nasceu de uma pesquisa de literatura comparada sobre saÃºde mental feminina da ArteCeb. Nise da Silveira lembra que cuidar tambÃ©m Ã© escutar, criar e acolher. Este app nÃ£o substitui profissionais de saÃºde.</p></div>
+ <div class="card"><h3>Seus dados</h3><div class="gap"></div><button class="btn alt" onclick="cp()">Copiar meus dados</button><div class="gap"></div><button class="btn alt" onclick="wipe()">Apagar tudo</button></div>`}
+function cp(){try{navigator.clipboard.writeText(JSON.stringify({...S,art:[],pin:null},null,1)).then(()=>toast("Dados copiados"),()=>toast("NÃ£o foi possÃ­vel copiar"))}catch(e){toast("NÃ£o foi possÃ­vel copiar")}}
+function wipe(){if(confirm("Apagar todos os seus registros? Isso nÃ£o pode ser desfeito.")){try{localStorage.removeItem(K)}catch(e){}S={name:"",log:{},journal:[],rit:{},art:[],plan:{},pin:null};tab="hoje";render()}}
+/* PIN */
+const hx=async(p,s)=>{const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(p),"PBKDF2",false,["deriveBits"]);const b=await crypto.subtle.deriveBits({name:"PBKDF2",salt:new TextEncoder().encode(s),iterations:150000,hash:"SHA-256"},k,256);return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")};
+function sp(t,s){pt=[t,s||""];drawPad()}
+function drawPad(){const e=$("#lk");e.className="on";e.innerHTML=`<div class="in2"><img class="lkimg" src="${IMG}" alt=""><h2 style="margin-top:14px">${pt[0]}</h2><p class="mute">${pt[1]}</p><div class="dots">${[0,1,2,3].map(i=>`<i class="${i<buf.length?"f":""}"></i>`).join("")}</div><div class="keys">${[1,2,3,4,5,6,7,8,9,"",0,"âŒ«"].map(k=>`<button ${k===""?"disabled style='visibility:hidden'":""} onclick="key('${k}')">${k}</button>`).join("")}</div>${pm=="unlock"?"":`<button class="lnk" onclick="pm=null;buf='';$('#lk').className=''">Cancelar</button>`}</div>`}
+const shk=()=>{const d=$(".dots");d&&d.classList.add("shake")},cl=()=>{pm=null;$("#lk").className=""};
+async function key(k){
+ if(k=="âŒ«")buf=buf.slice(0,-1);else if(buf.length<4)buf+=k;
+ if(buf.length<4){drawPad();return}
+ const b=buf;buf="";
+ if(pm=="unlock"||pm=="off"){
+  if(Date.now()<until){sp("Aguarde um pouco","Muitas tentativas. Tente em 30 segundos.");shk();return}
+  if(await hx(b,S.pin.s)==S.pin.h){fails=0;const o=pm=="off";cl();if(o){S.pin=null;save();toast("PIN removido")}render()}
+  else{if(++fails>=5){until=Date.now()+30000;fails=0}sp("PIN incorreto","Tente novamente.");shk()}
+ }else if(pm=="new"){fst=b;pm="conf";sp("Confirme o PIN","Digite novamente.")}
+ else if(pm=="conf"){if(b==fst){const s=[...crypto.getRandomValues(new Uint8Array(12))].join("");S.pin={s,h:await hx(b,s)};cl();ach(()=>{});toast("PIN ativado ðŸ”’")}else{pm="new";sp("NÃ£o coincidiu","Crie o PIN novamente.");shk()}}}
+document.addEventListener("visibilitychange",()=>{if(document.hidden)hid=Date.now();else if(S.pin&&S.name&&pm!="unlock"&&Date.now()-hid>30000){pm="unlock";buf="";sp("Bem-vinda de volta","Digite seu PIN.")}});
+const QT=[
+  ["Quem Ã© feliz faz os outros felizes tambÃ©m.","Lucy Maud Montgomery",""],
+  ["Grandes palavras sÃ£o necessÃ¡rias para expressar grandes ideias.","Lucy Maud Montgomery",""],
+  ["Ã‰ muito bom ler sobre tristezas e imaginar-se vivendo-as heroicamente, mas nÃ£o Ã© tÃ£o agradÃ¡vel quando vocÃª realmente as vivencia, nÃ£o Ã©?","Lucy Maud Montgomery",""],
+  ["Pela minha experiÃªncia, quase sempre Ã© possÃ­vel desfrutar das coisas se vocÃª se decidir firmemente a fazÃª-lo.","Lucy Maud Montgomery",""],
+  ["Devemos lamentar nossos erros e aprender com eles, mas nunca carregÃ¡-los conosco para o futuro.","Lucy Maud Montgomery",""],
+  ["A inocÃªncia nÃ£o dura a vida inteira\nBrinque de ser sÃ©rio\nE leve a sÃ©rio a brincadeira","Rita Lee",""],
+  ["NÃ£o Ã© sobre o que vocÃª diz, Ã© sobre o que vocÃª faz.","Rita Lee",""],
+  ["Enquanto estou viva e\nCheia de graÃ§a,\nTalvez ainda faÃ§a\nUm monte de gente feliz!","Rita Lee",""],
+  ["ImaginaÃ§Ã£o Ã© quando a inteligÃªncia se diverte.","Rita Lee",""],
+  ["A vida tem isso\nNo fim tudo faz sentido\nEntÃ£o atÃ© mais\nNÃ£o adianta olhar pra trÃ¡s.","Rita Lee",""],
+  ["Quem jÃ¡ nÃ£o se perguntou: sou um monstro ou isto Ã© ser um ser humano?","Clarice Lispector","A hora da estrela"],
+  ["Olhou-se e levemente pensou: tÃ£o jovem e jÃ¡ com ferrugem","Clarice Lispector","A hora da estrela"],
+  ["NÃ£o sou feia, mas nunca ganhei os homens pela beleza, entÃ£o o humor sempre foi meu trunfo, mesmo que Ã s vezes descambasse para a autodepreciaÃ§Ã£o","Paula Gicovate","Notas sobre a impermanÃªncia"],
+  ["gente apaixonada se apega a tÃ£o pouco, nÃ©?","Paula Gicovate","Notas sobre a impermanÃªncia"],
+  ["Ã© ruim ser devolvido em algum lugar para dormir sozinho de madrugada, Ã© ruim ser devolvido em qualquer lugar","Mariana SalomÃ£o Carrara","Ã‰ sempre a hora da nossa morte amÃ©m"],
+  ["E quem salvarÃ¡ a mÃ£e que deixa sua menina que nÃ£o tem nem dois anos aos cuidados da vizinha triste, pessoas tristes nÃ£o servem para olhar crianÃ§as","Mariana SalomÃ£o Carrara","Ã‰ sempre a hora da nossa morte amÃ©m"],
+  ["Mas achava tambÃ©m que qualquer vida era um risco e o risco maior era o de nÃ£o tentar viver.","Ana Davenga",""],
+  ["A corda bamba do tempo, varal no qual estava estendida a vida, era frÃ¡gil, podendo se romper a qualquer hora.","O cooper de Cida",""],
+  ["E quando a dor vem encostar-se a nÃ³s, enquanto um olho chora, o outro espia o tempo procurando a soluÃ§Ã£o.","Ayoluwa","a alegria do nosso povo"],
+  ["Se ao menos o medo me fizesse recuar, pelo contrÃ¡rio, avanÃ§o mais e mais na mesma proporÃ§Ã£o desse medo. Ã‰ como se o medo fosse uma coragem ao contrÃ¡rio.","A gente combinamos de nÃ£o morrer",""],
+  ["atÃ© passou pela minha cabeÃ§a mudar de rumo aparecer na sala da Maria AntÃ´nia, contar tudo sobre o meu collant, meu nÃ¡ufrago, mas eu nÃ£o queria que ela me visse assim tÃ£o lÃ­quida, talvez atÃ© pensasse que sou fraca.","Aline Bei","Pequena coreografia do adeus"]
+];
+QS.push(...QT.map(q=>[q[0],q[1]+(q[2]?" Â· "+q[2]:"")]));
+function splash(){const q=QT[Math.floor(Math.random()*QT.length)],e=$("#sp");
+ e.innerHTML=`<div class="in2"><img class="lkimg" src="${IMG}" alt=""><h1 style="font-size:34px;margin-top:14px">MUSA</h1><p class="q">â€œ${esc(q[0])}â€</p><p class="mute">${esc(q[1])}${q[1]&&q[2]?" Â· ":""}${q[2]?"<i>"+esc(q[2])+"</i>":""}</p><button class="btn" style="margin-top:22px" onclick="enter()">Entrar</button></div><i class="pg"></i>`;
+ e.className="on";splash.t=setTimeout(enter,7000)}
+function enter(){clearTimeout(splash.t);const e=$("#sp");if(e.className!="on")return;e.className="out";setTimeout(()=>e.className="",400);
+ if(S.pin&&S.name&&SEC){pm="unlock";sp("Bem-vinda de volta","Digite seu PIN.")}else{S.pin=SEC?S.pin:null;render()}}
+splash();
+try{if("serviceWorker"in navigator&&location.protocol.indexOf("http")==0)navigator.serviceWorker.register("sw.js").catch(()=>{})}catch(e){}
+window.addEventListener('error', e => console.error('Global error:', e.error));
+window.addEventListener('unhandledrejection', e => console.error('Unhandled rejection:', e.reason));
