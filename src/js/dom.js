@@ -24,7 +24,8 @@ export function dk(d) {
 }
 
 export const today = dk();
-export const dayN = Math.floor(Date.now() / 864e5);
+// Índice do dia no fuso local (troca à meia-noite do usuário, não em UTC)
+export const dayN = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 864e5);
 
 // Dias seguidos com registro
 export function streak() {

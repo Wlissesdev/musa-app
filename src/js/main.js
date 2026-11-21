@@ -5,7 +5,7 @@
 
 import { QT, IMG, SEC } from './data.js';
 import { S, ui } from './store.js';
-import { $, esc } from './dom.js';
+import { $, esc, dayN } from './dom.js';
 import * as views from './views.js';
 import * as actions from './actions.js';
 import * as pin from './pin.js';
@@ -15,7 +15,8 @@ import * as pin from './pin.js';
 let splashTimer = null;
 
 function splash() {
-  const q = QT[Math.floor(Math.random() * QT.length)];
+  // Frase do dia: mesma durante todo o dia, muda diariamente (não é aleatória).
+  const q = QT[((dayN % QT.length) + QT.length) % QT.length];
   const e = $("#sp");
   if (!e) return;
   e.innerHTML = `<div class="in2"><img class="lkimg" src="${IMG}" alt="">` +
