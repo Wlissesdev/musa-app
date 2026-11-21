@@ -39,15 +39,6 @@ export const AP = [
   "Desenhe um lugar onde você se sente segura."
 ];
 
-// Frases curtas que rotacionam na tela de hoje
-export const QS = [
-  ["Não se curem além da conta. Gente curada demais é gente chata.", "Frase atribuída a Nise da Silveira"],
-  ["Sentir não é fraqueza. É informação sobre o que importa para você.", "MUSA"],
-  ["Descansar também é cuidar. Você não precisa merecer uma pausa.", "MUSA"],
-  ["Pedir ajuda é uma forma de coragem, não de fracasso.", "MUSA"],
-  ["Hoje basta um passo pequeno. Ele ainda conta.", "MUSA"]
-];
-
 // Rituais de cuidado
 export const RIT = [
   ["agua", "💧", "Água"],

@@ -3,7 +3,7 @@
  * Seletores, escape de HTML, datas, sequência (streak), conquistas, hash do PIN e toast.
  */
 
-import { RIT } from './data.js';
+import { RIT, QT } from './data.js';
 import { S, save } from './store.js';
 
 // Seletores
@@ -26,6 +26,12 @@ export function dk(d) {
 export const today = dk();
 // Índice do dia no fuso local (troca à meia-noite do usuário, não em UTC)
 export const dayN = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 864e5);
+
+// Frase do dia: a MESMA na abertura e na tela Hoje, trocando diariamente.
+// Usa apenas as citações literárias reais (QT).
+export function quoteOfDay() {
+  return QT[((dayN % QT.length) + QT.length) % QT.length];
+}
 
 // Dias seguidos com registro
 export function streak() {

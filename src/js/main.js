@@ -3,9 +3,9 @@
  * Monta a abertura, registra as funções usadas pelo HTML e inicializa o app.
  */
 
-import { QT, IMG, SEC } from './data.js';
+import { IMG, SEC } from './data.js';
 import { S, ui } from './store.js';
-import { $, esc, dayN } from './dom.js';
+import { $, esc, quoteOfDay } from './dom.js';
 import * as views from './views.js';
 import * as actions from './actions.js';
 import * as pin from './pin.js';
@@ -15,8 +15,8 @@ import * as pin from './pin.js';
 let splashTimer = null;
 
 function splash() {
-  // Frase do dia: mesma durante todo o dia, muda diariamente (não é aleatória).
-  const q = QT[((dayN % QT.length) + QT.length) % QT.length];
+  // Frase do dia: a mesma que aparece na tela Hoje; muda diariamente.
+  const q = quoteOfDay();
   const e = $("#sp");
   if (!e) return;
   e.innerHTML = `<div class="in2"><img class="lkimg" src="${IMG}" alt="">` +

@@ -5,10 +5,10 @@
  */
 
 import {
-  MOODS, MOOD_LABELS, TAGS, PROMPTS, AP, QS, RIT, BOOKS, BR, TABS, IMG, SEC
+  MOODS, MOOD_LABELS, TAGS, PROMPTS, AP, RIT, BOOKS, BR, TABS, IMG, SEC
 } from './data.js';
 import { S, ui, save, freshDraft } from './store.js';
-import { $, esc, streak, nb, dk, today, dayN, BD, ach, toast } from './dom.js';
+import { $, esc, streak, nb, dk, today, dayN, quoteOfDay, BD, ach, toast } from './dom.js';
 
 // ---------------------------------------------------------------------------
 // Navegação e render principal
@@ -88,7 +88,7 @@ function hoje() {
   const l = S.log[today];
   const h = new Date().getHours();
   const g = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
-  const q = QS[dayN % QS.length];
+  const q = quoteOfDay();
   const sk = streak();
   const rd = S.rit[today] || [];
   const dataLonga = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
