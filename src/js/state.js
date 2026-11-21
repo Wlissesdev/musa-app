@@ -3,7 +3,7 @@
  * State management: S (main state), save, load
  */
 
-import { STORAGE_KEY, $ } from './constants.js';
+import { STORAGE_KEY } from './constants.js';
 
 // Main state object
 export let S;
@@ -21,9 +21,6 @@ export function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
   } catch (e) {
-    toast("Sem espaco para salvar");
+    console.warn("Sem espaco para salvar");
   }
 }
-
-// Initialize on import
-loadState();

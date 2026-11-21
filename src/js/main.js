@@ -17,6 +17,9 @@ import {
 import { saveLog, tg, rt } from './actions.js';
 import { splash, enter } from './splash.js';
 
+// Load state explicitly (was previously auto-loaded on import)
+loadState();
+
 // Make functions globally available for inline onclick handlers
 window.go = go;
 window.render = render;
@@ -62,8 +65,6 @@ window.cx = cx;
 
 // Initialize the app
 function initApp() {
-  // State is already loaded via state.js import
-  
   // Extend QS with QT quotes for daily rotation
   QS.push(...QT.map(q => [q[0], q[1] + (q[2] ? " · " + q[2] : "")]));
   
