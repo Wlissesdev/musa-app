@@ -1,105 +1,122 @@
 /**
- * MUSA - PIN Module
- * PIN lock screen: drawPad, key handling, hash verification
+ * MUSA — tela de PIN
+ * Modal de 4 dígitos para criar, confirmar, remover e desbloquear.
  */
 
-import { IMG, $, SEC } from './constants.js';
-import { S, saveState } from './state.js';
-import { hx, toast } from './utils.js';
-import { pm, fst, buf, pt, fails, until, hid, cl, shk, drawPad, sp, key } from './render.js';
+import { IMG, SEC } from './data.js';
+import { S, ui, save } from './store.js';
+import { $, toast, hash, ach } from './dom.js';
+import { render } from './views.js';
 
-// Re-export PIN functions
-export { pm, fst, buf, pt, fails, until, hid, cl, shk, drawPad, sp, key };
+const KEYS = [1, 2, 3, 4, 5, 6, 7, 8, 9, "", 0, "⌫"];
 
-// Show PIN pad
-export function sp(t, s) {
-  pt = [t, s || ""];
+export function showPin(title, sub) {
+  ui.pt = [title, sub || ""];
   drawPad();
 }
 
-// Draw PIN keypad
+// Pede o PIN para desbloquear o app
+export function promptUnlock() {
+  ui.pm = "unlock";
+  ui.buf = "";
+  showPin("Bem-vinda de volta", "Digite seu PIN.");
+}
+
 export function drawPad() {
   const e = $("#lk");
   if (!e) return;
-  e.className = "on";
-  e.innerHTML = `<div class="in2"><img class="lkimg" src="${IMG}" alt=""><h2 style="margin-top:14px">${pt[0]}</h2><p class="mute">${pt[1]}</p><div class="dots">${[0, 1, 2, 3].map(i => `<i class="${i < buf.length ? "f" : ""}"></i>`).join("")}</div><div class="keys">${[1, 2, 3, 4, 5, 6, 7, 8, 9, "", 0, "⌫"].map(k => `<button ${k === "" ? "disabled style='visibility:hidden'" : ""} onclick="key('${k}")">${k}</button>`).join("")}</div>${pm === "unlock" ? "" : `<button class="lnk" onclick="pm=null;buf='';$('#lk').className=''">Cancelar</button>`}</div>`;
+  e.classList.add("on");
+  const dots = [0, 1, 2, 3].map((i) => `<i class="${i < ui.buf.length ? "f" : ""}"></i>`).join("");
+  const keys = KEYS.map((k) =>
+    k === ""
+      ? `<button disabled style="visibility:hidden"></button>`
+      : `<button onclick="pinKey('${k}')" ${k === "⌫" ? 'aria-label="Apagar"' : ""}>${k}</button>`
+  ).join("");
+  e.innerHTML = `<div class="in2"><img class="lkimg" src="${IMG}" alt="">` +
+    `<h2 style="margin-top:14px">${ui.pt[0]}</h2><p class="mute">${ui.pt[1]}</p>` +
+    `<div class="dots">${dots}</div><div class="keys">${keys}</div>` +
+    `${ui.pm === "unlock" ? "" : `<button class="lnk" onclick="pinCancel()">Cancelar</button>`}</div>`;
 }
 
-// Shake animation on error
-export const shk = () => {
+export function pinCancel() {
+  ui.pm = null;
+  ui.buf = "";
+  const l = $("#lk");
+  if (l) l.classList.remove("on");
+}
+
+function shake() {
   const d = $(".dots");
-  d && d.classList.add("shake");
-};
+  if (d) {
+    d.classList.add("shake");
+    setTimeout(() => d.classList.remove("shake"), 400);
+  }
+}
 
-// Close PIN modal
-export const cl = () => {
-  pm = null;
-  const lk = $("#lk");
-  if (lk) lk.className = "";
-};
+export async function pinKey(k) {
+  if (k === "⌫") ui.buf = ui.buf.slice(0, -1);
+  else if (ui.buf.length < 4) ui.buf += k;
 
-// Handle keypad input
-export async function key(k) {
-  if (k === "⌫") buf = buf.slice(0, -1);
-  else if (buf.length < 4) buf += k;
-
-  if (buf.length < 4) {
+  if (ui.buf.length < 4) {
     drawPad();
     return;
   }
 
-  const b = buf;
-  buf = "";
+  const digitado = ui.buf;
+  ui.buf = "";
 
-  if (pm === "unlock" || pm === "off") {
-    if (Date.now() < until) {
-      sp("Aguarde um pouco", "Muitas tentativas. Tente em 30 segundos.");
-      shk();
+  if (ui.pm === "unlock" || ui.pm === "off") {
+    if (Date.now() < ui.until) {
+      showPin("Aguarde um pouco", "Muitas tentativas. Tente em 30 segundos.");
+      shake();
       return;
     }
-    if (await hx(b, S.pin.s) === S.pin.h) {
-      fails = 0;
-      const o = pm === "off";
-      cl();
-      if (o) {
+    if (!S.pin) { pinCancel(); render(); return; }
+    if ((await hash(digitado, S.pin.s)) === S.pin.h) {
+      ui.fails = 0;
+      const removing = ui.pm === "off";
+      pinCancel();
+      if (removing) {
         S.pin = null;
-        saveState();
+        save();
         toast("PIN removido");
       }
-      import('./render.js').then(m => m.render());
+      render();
     } else {
-      if (++fails >= 5) {
-        until = Date.now() + 30000;
-        fails = 0;
+      if (++ui.fails >= 5) {
+        ui.until = Date.now() + 30000;
+        ui.fails = 0;
       }
-      sp("PIN incorreto", "Tente novamente.");
-      shk();
+      showPin("PIN incorreto", "Tente novamente.");
+      shake();
     }
-  } else if (pm === "new") {
-    fst = b;
-    pm = "conf";
-    sp("Confirme o PIN", "Digite novamente.");
-  } else if (pm === "conf") {
-    if (b === fst) {
-      const s = [...crypto.getRandomValues(new Uint8Array(12))].join("");
-      S.pin = { s, h: await hx(b, s) };
-      cl();
+  } else if (ui.pm === "new") {
+    ui.fst = digitado;
+    ui.pm = "conf";
+    showPin("Confirme o PIN", "Digite novamente.");
+  } else if (ui.pm === "conf") {
+    if (digitado === ui.fst) {
+      const salt = [...crypto.getRandomValues(new Uint8Array(12))].join("");
+      S.pin = { s: salt, h: await hash(digitado, salt) };
+      pinCancel();
       ach(() => {});
-      toast("PIN ativado 💚");
+      toast("PIN ativado 🔒");
+      render(0);
     } else {
-      pm = "new";
-      sp("Não coincidiu", "Crie o PIN novamente.");
-      shk();
+      ui.pm = "new";
+      showPin("Não coincidiu", "Crie o PIN novamente.");
+      shake();
     }
   }
 }
 
-// Visibility change handler for PIN lock
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) hid = Date.now();
-  else if (S.pin && S.name && pm !== "unlock" && Date.now() - hid > 30000) {
-    pm = "unlock";
-    buf = "";
-    sp("Bem-vinda de volta", "Digite seu PIN.");
-  }
-});
+// Bloqueia ao voltar depois de um tempo fora
+export function initVisibilityLock() {
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      ui.hid = Date.now();
+    } else if (S.pin && S.name && SEC && ui.pm !== "unlock" && Date.now() - ui.hid > 30000) {
+      promptUnlock();
+    }
+  });
+}

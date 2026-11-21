@@ -4,26 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2a0f24">
+<meta name="description" content="MUSA — diário digital de cuidado e saúde mental feminina, inspirado em Nise da Silveira. Seus dados ficam só no seu aparelho.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="color-scheme" content="light dark">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MUSA">
 <title>MUSA</title>
-<link rel="stylesheet" href="src/css/variables.css">
-<script>
-(function(){
-  const isMobile = ("ontouchstart" in window || navigator.maxTouchPoints > 0) && window.innerWidth < 768;
-  const platform = isMobile ? "mobile" : "desktop";
-  document.documentElement.classList.add(platform);
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = "src/css/" + platform + ".css";
-  document.head.appendChild(link);
-})();
-</script>
+<link rel="stylesheet" href="src/css/app.css">
 </head>
 <body>
 <div id="app">
-  <aside class="sidebar" aria-label="Navegaçăo principal">
+  <aside class="sidebar" aria-label="Navegação principal">
     <div class="sidebar-header">
       <div class="logo">MUSA</div>
       <div class="subtitle">Mulheres, Universo, Saúde, Arte</div>
@@ -31,12 +27,33 @@
     <nav class="sidebar-nav" id="sidenav"></nav>
     <div class="sidebar-footer">v2 · Dados só seus</div>
   </aside>
-  <main id="v"></main>
-  <nav id="nav" class="bottom-nav" aria-label="Navegaçăo mobile"></nav>
+  <main id="v" class="in"></main>
+  <nav id="nav" class="bottom-nav" aria-label="Navegação"></nav>
 </div>
-<div id="lk" class="modal-container"></div>
-<div id="sp" class="modal-container"></div>
-<div id="toast"></div>
+
+<div id="lk"></div>
+<div id="sp" class="on">
+  <div class="in2">
+    <h1 style="font-size:34px;margin-top:14px">MUSA</h1>
+    <p class="mute">Carregando…</p>
+  </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<noscript><p style="padding:24px;font-family:system-ui">O MUSA precisa de JavaScript para funcionar.</p></noscript>
+
 <script type="module" src="src/js/main.js"></script>
+<script>
+// Rede de segurança: se o app não inicializar, mostra uma mensagem em vez de travar na abertura.
+setTimeout(function () {
+  if (window.__MUSA_OK) return;
+  var sp = document.getElementById('sp');
+  if (sp && sp.classList.contains('on')) {
+    sp.innerHTML = '<div class="in2"><h1 style="font-size:34px">MUSA</h1>' +
+      '<p class="mute">Não foi possível carregar o app. Verifique a conexão e tente novamente.</p>' +
+      '<button class="btn" style="margin-top:22px" onclick="location.reload()">Recarregar</button></div>';
+  }
+}, 4000);
+</script>
 </body>
 </html>
